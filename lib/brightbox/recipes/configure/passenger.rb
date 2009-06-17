@@ -34,7 +34,7 @@ namespace :configure do
   task :apache, :roles => :web, :except => {:no_release => true} do
     sudo on_one_line( <<-END
         #{send("apache_setup")}
-        -n #{application}
+        -n #{application}-#{rails_env}
         -d #{domain}
         #{'-a '+domain_aliases if domain_aliases}
         -w #{File.join(current_path, 'public')}
