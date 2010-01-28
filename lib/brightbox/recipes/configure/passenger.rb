@@ -19,7 +19,7 @@
 #
 
 namespace :configure do
-  
+
   desc %Q{
   [internal]Create Apache config. Creates a load balancing virtual host \
   configuration based upon your specified settings
@@ -32,25 +32,30 @@ namespace :configure do
 
   }
   task :apache, :roles => :web, :except => {:no_release => true} do
-    sudo on_one_line( <<-END
-        #{send("apache_setup")}
-        -n #{application}-#{rails_env}
-        -d #{domain}
-        #{'-a '+domain_aliases if domain_aliases}
-        -w #{File.join(current_path, 'public')}
-        --passenger
-        --railsenv #{rails_env}
-        #{'-m '+max_age if max_age}
-        #{'-c '+ssl_certificate if ssl_certificate} 
-        #{'-k '+ssl_key if ssl_key}
-    END
-        )
+    # Bail out if we don't want to generate config
+    run_when_generating_webserver_config_allowed do
+      # Create the configs
+      sudo on_one_line( <<-END
+          #{send("apache_setup")}
+          -n #{application}-#{rails_env}
+          -d #{domain}
+          #{'-a '+domain_aliases if domain_aliases}
+          -w #{File.join(current_path, 'public')}
+          --passenger
+          --railsenv #{rails_env}
+          #{"-m #{max_age}" if max_age}
+          #{"-c #{ssl_certificate}" if ssl_certificate}
+          #{"-k #{ssl_key}" if ssl_key}
+          #{"-i #{ssl_intermediate}" if ssl_intermediate}
+      END
+          )
+    end
   end
-  
+
   task :mongrel, :roles => :app, :except => {:no_release => true} do
   end
-  
+
   task :monit, :roles => :app, :except => {:no_release => true} do
   end
-  
+
 end
